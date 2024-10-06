@@ -5,7 +5,7 @@ from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 
 # Membaca dataset
-df = pd.read_csv('C:/Users/ibuba/Kuliah/Semester 5/SainsData/WorkshopAnalisaMediaSosial/data')
+df = pd.read_csv('data')
 df.drop(columns=["Unnamed: 0"], inplace=True)
 df.dropna(inplace=True)
 
