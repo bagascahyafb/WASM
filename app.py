@@ -33,10 +33,6 @@ if not selected_job_type:
 if not selected_work_hours:
     selected_work_hours = df["Work Hours"].unique()
 
-# Fungsi untuk membuat URL menjadi clickable
-def make_clickable(url):
-    return f'<a href="{url}" target="_blank">{url}</a>'
-
 # Filter data berdasarkan pilihan user
 filtered_data = df[
     (df["Kota"].isin(selected_city)) &
@@ -44,10 +40,14 @@ filtered_data = df[
     (df["Work Hours"].isin(selected_work_hours))
 ]
 
+# Fungsi untuk membuat URL menjadi clickable
+def make_clickable(url):
+    return f'<a href="{url}" target="_blank">{url}</a>'
+
 # Fungsi untuk menampilkan peta folium
 def generate_map(filtered_data):
     # Membuat peta dengan posisi awal Indonesia
-    m = folium.Map(location=[-0.789275, 113.921327], zoom_start=5)
+    m = folium.Map(location=[-0.789275, 113.921327], zoom_start=4)
 
     # Membuat MarkerCluster
     marker_cluster = MarkerCluster().add_to(m)
@@ -86,65 +86,74 @@ items_per_page = 10
 total_items = filtered_data.shape[0]
 total_pages = (total_items // items_per_page) + (1 if total_items % items_per_page > 0 else 0)
 
-# Membuat CSS untuk memastikan tabel tidak berada di tengah dan memperbesar tombol pagination
+# Membuat CSS untuk pagination horizontal
 st.write("""
     <style>
-    table {
-        width: 100%;
-        table-layout: auto;
-        margin-left: 0;
-    }
     .pagination-button {
         padding: 10px 20px;
         font-size: 16px;
         margin: 5px;
         display: inline-block;
+        text-align: center;
     }
     .pagination-container {
-        text-align: left;
+        display: flex;
+        justify-content: left;
         margin-top: 20px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Fungsi untuk menampilkan nomor halaman dengan 3 awal dan 3 akhir
+# Fungsi untuk menampilkan nomor halaman secara horizontal dengan simbol navigasi
 def display_page_numbers(total_pages, current_page):
     page_numbers = []
-    cols = st.columns(min(total_pages, 10))  # Membatasi maksimal 10 kolom
 
-    # Menentukan nomor halaman yang akan ditampilkan
+    # Tambahkan simbol '<' untuk pindah ke halaman pertama
+    if current_page > 1:
+        page_numbers.append('<')
+
     if total_pages <= 6:
-        page_numbers = list(range(1, total_pages + 1))  # Jika halaman kurang dari 6, tampilkan semua
+        page_numbers.extend(list(range(1, total_pages + 1)))
     else:
-        # Menampilkan 3 halaman awal, 3 halaman akhir, dan halaman di sekitar current_page
         if current_page <= 3:
-            page_numbers = [1, 2, 3, '...', total_pages - 2, total_pages - 1, total_pages]
-        elif current_page > total_pages - 3:
-            page_numbers = [1, 2, 3, '...', total_pages - 2, total_pages - 1, total_pages]
+            page_numbers.extend(list(range(1, 6)) + ['...'] + [total_pages - 2, total_pages - 1, total_pages])
+        elif current_page >= total_pages - 2:
+            page_numbers.extend([1, 2, 3, '...'] + list(range(total_pages - 4, total_pages + 1)))
         else:
-            page_numbers = [1, 2, 3, '...', current_page - 1, current_page, current_page + 1, '...', total_pages - 2, total_pages - 1, total_pages]
+            page_numbers.extend([1, '...', current_page - 1, current_page, current_page + 1, '...'] + [total_pages - 2, total_pages - 1, total_pages])
 
-    # Menampilkan tombol
-    pagination_container = st.container()
-    with pagination_container:
-        for page_num in page_numbers:
-            if page_num == '...':
-                st.write("...")
-            else:
-                if st.button(f"{page_num}", key=page_num):
-                    return page_num
+    # Tambahkan simbol '>' untuk pindah ke halaman terakhir
+    if current_page < total_pages:
+        page_numbers.append('>')
 
-    return current_page
+    return page_numbers
 
 # Awal halaman (1)
 if 'page_number' not in st.session_state:
     st.session_state.page_number = 1
 
-# Pilihan halaman menggunakan tombol angka
-current_page = display_page_numbers(total_pages, st.session_state.page_number)
+# Fungsi untuk memperbarui nomor halaman berdasarkan tombol yang diklik
+def update_page_number(page_num, total_pages):
+    if page_num == '<':
+        st.session_state.page_number = 1
+    elif page_num == '>':
+        st.session_state.page_number = total_pages
+    elif page_num != '...' and page_num != st.session_state.page_number:
+        st.session_state.page_number = page_num
 
-# Update session state jika halaman berubah
-st.session_state.page_number = current_page
+# Pilihan halaman menggunakan tombol angka
+page_numbers = display_page_numbers(total_pages, st.session_state.page_number)
+
+# Tampilkan pagination secara horizontal
+pagination_container = st.container()
+with pagination_container:
+    cols = st.columns(len(page_numbers))
+    for idx, page_num in enumerate(page_numbers):
+        if page_num == '...':
+            cols[idx].write("...")
+        else:
+            if cols[idx].button(f"{page_num}", key=page_num):
+                update_page_number(page_num, total_pages)
 
 # Menentukan batas data yang ditampilkan
 start_idx = (st.session_state.page_number - 1) * items_per_page
@@ -153,9 +162,11 @@ end_idx = start_idx + items_per_page
 # Membatasi data sesuai dengan halaman yang dipilih
 paginated_data = filtered_data.iloc[start_idx:end_idx]
 
-# Menampilkan tabel dengan data terfilter dan paginated
-selected_columns = ["Kota", "Company Name", "Job Title", "URL", "Type", "Work Hours"]
+# Menggunakan make_clickable untuk kolom URL agar dapat diklik
+paginated_data["URL"] = paginated_data["URL"].apply(make_clickable)
 
+# Menampilkan tabel dengan data terfilter dan paginated, pastikan kolom URL dapat diklik
+selected_columns = ["Kota", "Company Name", "Job Title", "URL", "Type", "Work Hours"]
 st.write(paginated_data[selected_columns].to_html(escape=False), unsafe_allow_html=True)
 
 # Informasi halaman
