@@ -5,21 +5,20 @@ from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 
 # Membaca dataset
-df = pd.read_csv('data')
-df.drop(columns=["Unnamed: 0"], inplace=True)
+df = pd.read_csv('data clean')
 df.dropna(inplace=True)
 
 # Deskripsi singkat di tampilan awal
-st.title("Pencarian Lowongan Pekerjaan di Indonesia")
+st.title("Pencarian Lowongan Kerja Pengolahan Data di Indonesia")
 st.write("""
-    Aplikasi ini membantu Anda mencari lowongan pekerjaan di berbagai kota di Indonesia.
+    Aplikasi ini membantu Anda mencari lowongan pekerjaan mengenai pengolahan data di berbagai kota di Indonesia.
     Anda dapat memfilter lowongan berdasarkan kota, tipe pekerjaan, dan jam kerja, serta
     melihat persebaran lowongan tersebut pada peta interaktif.
 """)
 
 # Filter di bagian atas laman
 st.subheader("Filter Lowongan")
-selected_city = st.multiselect("Pilih Kota", options=df["Kota"].unique(), default=[])
+selected_city = st.multiselect("Pilih Daerah", options=df["Kota"].unique(), default=[])
 selected_job_type = st.multiselect("Pilih Tipe Pekerjaan", options=df["Type"].unique(), default=[])
 selected_work_hours = st.multiselect("Pilih Jam Kerja", options=df["Work Hours"].unique(), default=[])
 
@@ -47,7 +46,7 @@ def make_clickable(name, url):
 # Fungsi untuk menampilkan peta folium
 def generate_map(filtered_data):
     # Membuat peta dengan posisi awal Indonesia
-    m = folium.Map(location=[-0.789275, 113.921327], zoom_start=4)
+    m = folium.Map(location=[-0.789275, 113.921327], zoom_start=6)
 
     # Membuat MarkerCluster
     marker_cluster = MarkerCluster().add_to(m)
