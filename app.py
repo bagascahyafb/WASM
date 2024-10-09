@@ -40,9 +40,9 @@ filtered_data = df[
     (df["Work Hours"].isin(selected_work_hours))
 ]
 
-# Fungsi untuk membuat URL menjadi clickable
-def make_clickable(url):
-    return f'<a href="{url}" target="_blank">{url}</a>'
+# Fungsi untuk membuat nama perusahaan menjadi hyperlink
+def make_clickable(name, url):
+    return f'<a href="{url}" target="_blank">{name}</a>'
 
 # Fungsi untuk menampilkan peta folium
 def generate_map(filtered_data):
@@ -162,11 +162,11 @@ end_idx = start_idx + items_per_page
 # Membatasi data sesuai dengan halaman yang dipilih
 paginated_data = filtered_data.iloc[start_idx:end_idx]
 
-# Menggunakan make_clickable untuk kolom URL agar dapat diklik
-paginated_data["URL"] = paginated_data["URL"].apply(make_clickable)
+# Menggabungkan URL ke dalam kolom "Company Name"
+paginated_data["Company Name"] = paginated_data.apply(lambda x: make_clickable(x["Company Name"], x["URL"]), axis=1)
 
-# Menampilkan tabel dengan data terfilter dan paginated, pastikan kolom URL dapat diklik
-selected_columns = ["Kota", "Company Name", "Job Title", "URL", "Type", "Work Hours"]
+# Menampilkan tabel dengan data terfilter dan paginated, pastikan kolom Company Name dapat diklik
+selected_columns = ["Kota", "Company Name", "Job Title", "Type", "Work Hours"]
 st.write(paginated_data[selected_columns].to_html(escape=False), unsafe_allow_html=True)
 
 # Informasi halaman
