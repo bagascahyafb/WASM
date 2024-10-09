@@ -162,8 +162,8 @@ end_idx = start_idx + items_per_page
 # Membatasi data sesuai dengan halaman yang dipilih
 paginated_data = filtered_data.iloc[start_idx:end_idx]
 
-# Menggabungkan URL ke dalam kolom "Company Name"
-paginated_data["Company Name"] = paginated_data.apply(lambda x: make_clickable(x["Company Name"], x["URL"]), axis=1)
+# Menggabungkan URL ke dalam kolom "Job Title"
+paginated_data["Job Title"] = paginated_data.apply(lambda x: make_clickable(x["Job Title"], x["URL"]), axis=1)
 
 # Menampilkan tabel dengan data terfilter dan paginated, pastikan kolom Company Name dapat diklik
 selected_columns = ["Kota", "Company Name", "Job Title", "Type", "Work Hours"]
